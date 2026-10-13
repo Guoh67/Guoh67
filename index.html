@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0, user-scalable=yes">
+    <title>养老规划小助手 - 适老版</title>
+    <style>
+        /* ===== 全局样式 ===== */
+        * { margin:0; padding:0; box-sizing:border-box; }
+        :root {
+            --font-size-base:20px;
+            --color-primary:#1a3a6b;
+            --color-primary-light:#2a5a9b;
+            --color-accent:#e8a838;
+            --color-bg-start:#1a3a6b;
+            --color-bg-end:#4a7ab5;
+            --color-card-bg:#ffffff;
+            --color-text:#1e1e1e;
+            --color-text-secondary:#3d3d3d;
+            --color-border:#b0b0b0;
+            --shadow-heavy:0 8px 32px rgba(0,0,0,0.18);
+            --radius-large:20px;
+            --radius-medium:14px;
+        }
+        html { font-size:var(--font-size-base); }
+        body {
+            font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+            font-size:1rem;
+            background:linear-gradient(145deg, var(--color-bg-start), var(--color-bg-end));
+            min-height:100vh;
+            color:var(--color-text);
+            line-height:1.7;
+            padding:12px;
+        }
+        body.font-xl { --font-size-base:24px; }
+        body.font-xl .header h1 { font-size:1.4rem; }
+        body.font-xl .btn-primary, body.font-xl .tab-btn, body.font-xl .quick-q { font-size:1.1rem; }
+
+        .safety-banner { background:#fff3cd; border-left:8px solid #d9534f; border-radius:var(--radius-medium); padding:14px 22px; margin-bottom:16px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; box-shadow:0 4px 12px rgba(217,83,79,0.2); }
+        .safety-banner .icon { font-size:1.6rem; }
+        .safety-banner .text { font-size:0.9rem; font-weight:600; color:#7a4a00; flex:1; }
+        .safety-banner .text small { font-weight:400; font-size:0.85rem; display:block; color:#5a3a00; }
+        .safety-banner .hotline { background:#d9534f; color:#fff; padding:8px 20px; border-radius:40px; font-weight:700; font-size:0.9rem; white-space:nowrap; }
+
+        .header { background:rgba(255,255,255,0.96); backdrop-filter:blur(6px); padding:16px 28px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; border-radius:var(--radius-medium); box-shadow:var(--shadow-heavy); margin-bottom:16px; }
+        .header h1 { font-size:1.4rem; color:var(--color-primary); display:flex; align-items:center; gap:12px; }
+        .header h1 .badge { font-size:0.5em; background:var(--color-accent); color:#fff; padding:2px 16px; border-radius:40px; margin-left:8px; }
+        .header-controls { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+        .font-size-btn { padding:10px 18px; border:2px solid var(--color-border); background:#f8f9fa; border-radius:40px; font-size:1rem; font-weight:700; cursor:pointer; min-width:52px; min-height:52px; transition:all 0.2s; display:inline-flex; align-items:center; justify-content:center; }
+        .font-size-btn:hover { background:var(--color-accent); color:#fff; border-color:var(--color-accent); }
+        .font-size-btn.active { background:var(--color-primary); color:#fff; border-color:var(--color-primary); }
+        .stop-btn { padding:10px 20px; border:2px solid #6c757d; background:#e9ecef; border-radius:40px; font-size:1rem; font-weight:700; cursor:pointer; min-width:52px; min-height:52px; transition:all 0.2s; color:#212529; display:inline-flex; align-items:center; gap:6px; }
+        .stop-btn:hover { background:#d4d8dd; border-color:#5a6268; }
+        .stop-btn.stopped { background:#d9534f !important; border-color:#b02a37 !important; color:#fff !important; box-shadow:0 0 0 4px rgba(217,83,79,0.3); }
+        .stop-btn.stopped:hover { background:#c9302c !important; }
+        .tts-toggle-wrap { display:flex; align-items:center; gap:10px; background:#f1f3f5; padding:6px 16px 6px 18px; border-radius:60px; border:2px solid transparent; transition:0.2s; min-height:52px; cursor:pointer; user-select:none; }
+        .tts-toggle-wrap.active { border-color:var(--color-primary); background:#e6eef9; }
+        .tts-toggle-wrap label { font-size:0.95rem; font-weight:600; color:var(--color-text-secondary); cursor:pointer; display:flex; align-items:center; gap:6px; margin:0; }
+        .switch { position:relative; display:inline-block; width:60px; height:34px; flex-shrink:0; }
+        .switch input { opacity:0; width:0; height:0; }
+        .slider { position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:#ccc; transition:.3s; border-radius:34px; }
+        .slider:before { position:absolute; content:""; height:26px; width:26px; left:4px; bottom:4px; background:white; transition:.3s; border-radius:50%; }
+        .switch input:checked + .slider { background:var(--color-primary); }
+        .switch input:checked + .slider:before { transform:translateX(26px); }
+
+        .main-container { display:flex; gap:20px; max-width:1600px; margin:0 auto; height:calc(100vh - 180px); min-height:600px; }
+        .sidebar { width:420px; flex-shrink:0; display:flex; flex-direction:column; gap:16px; overflow-y:auto; padding-right:4px; }
+        .panel { background:var(--color-card-bg); border-radius:var(--radius-large); padding:24px 26px; box-shadow:var(--shadow-heavy); }
+        .panel-title { font-size:1.2rem; font-weight:700; color:var(--color-primary); margin-bottom:18px; }
+        .tabs { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
+        .tab-btn { padding:14px 18px; border:none; border-radius:50px; background:#eaeef3; color:var(--color-text-secondary); cursor:pointer; font-size:0.95rem; font-weight:600; transition:all 0.25s; min-height:52px; flex:1 0 auto; text-align:center; }
+        .tab-btn.active { background:var(--color-primary); color:#fff; box-shadow:0 6px 16px rgba(26,58,107,0.35); }
+        .tab-btn:hover { transform:translateY(-2px); box-shadow:0 6px 12px rgba(0,0,0,0.1); }
+
+        .form-group { margin-bottom:16px; }
+        .form-group label { display:block; font-size:0.95rem; font-weight:600; color:var(--color-text); margin-bottom:6px; }
+        .form-group input, .form-group select { width:100%; padding:14px 18px; border:2px solid var(--color-border); border-radius:var(--radius-medium); font-size:1rem; background:#fcfcfd; transition:border-color 0.25s; min-height:52px; color:var(--color-text); }
+        .form-group input:focus, .form-group select:focus { outline:3px solid var(--color-accent); border-color:var(--color-primary); }
+        .form-row { display:flex; gap:14px; }
+        .form-row .form-group { flex:1; }
+
+        .btn-primary { width:100%; padding:18px 20px; border:none; border-radius:var(--radius-medium); background:var(--color-primary); color:#fff; font-size:1.15rem; font-weight:700; cursor:pointer; transition:all 0.25s; min-height:60px; letter-spacing:1px; box-shadow:0 4px 12px rgba(26,58,107,0.3); }
+        .btn-primary:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(26,58,107,0.4); background:var(--color-primary-light); }
+        .btn-primary:active { transform:scale(0.98); }
+
+        .result-area { flex:1; background:var(--color-card-bg); border-radius:var(--radius-large); display:flex; flex-direction:column; box-shadow:var(--shadow-heavy); overflow:hidden; min-width:0; }
+        .result-header { padding:20px 28px; border-bottom:2px solid #e9ecef; display:flex; align-items:center; gap:16px; flex-wrap:wrap; flex-shrink:0; }
+        .result-header .avatar { width:48px; height:48px; border-radius:50%; background:var(--color-primary); display:flex; align-items:center; justify-content:center; font-size:1.6rem; }
+        .result-header .info h3 { font-size:1.2rem; color:var(--color-primary); }
+        .result-header .info p { font-size:0.9rem; color:var(--color-text-secondary); }
+
+        .result-display { flex:1; overflow-y:auto; padding:24px 28px; background:#f8fafc; cursor:pointer; }
+        .result-display .placeholder { color:#999; font-size:1.1rem; text-align:center; margin-top:80px; }
+        .result-display .placeholder .big-icon { font-size:4rem; display:block; margin-bottom:20px; }
+
+        .result-card { background:#fff; border-radius:var(--radius-medium); padding:22px 24px; margin-bottom:20px; box-shadow:0 2px 8px rgba(0,0,0,0.06); border-left:6px solid var(--color-primary); cursor:pointer; transition:background 0.2s; }
+        .result-card:hover { background:#f4f7fc; }
+        .result-item { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px dashed #e0e6ed; font-size:0.95rem; }
+        .result-item:last-child { border-bottom:none; }
+        .result-item .label { color:var(--color-text-secondary); font-weight:500; }
+        .result-item .value { font-weight:700; text-align:right; }
+        .result-item .value.danger { color:#b02a37; }
+        .result-item .value.success { color:#1e7e34; }
+        .result-item .value.warning { color:#856404; }
+        .result-section-title { font-size:1.05rem; font-weight:700; color:var(--color-primary); margin:16px 0 8px; padding-top:10px; border-top:2px solid #e0e6ed; }
+        .result-section-title:first-of-type { border-top:none; margin-top:0; padding-top:0; }
+        .scenario-badge { display:inline-block; padding:6px 20px; border-radius:40px; font-size:0.9rem; font-weight:700; margin-bottom:12px; }
+        .scenario-badge.conservative { background:#fff3cd; color:#7a5a00; }
+        .scenario-badge.neutral { background:#d1ecf1; color:#0c5460; }
+        .scenario-badge.optimistic { background:#d4edda; color:#155724; }
+
+        .param-explanation {
+            background:#f0f5ff;
+            border-radius:var(--radius-medium);
+            padding:16px 20px;
+            margin-top:16px;
+            border-left:4px solid var(--color-accent);
+            font-size:0.95rem;
+            color:#333;
+            cursor:pointer;
+            transition:background 0.2s;
+        }
+        .param-explanation:hover { background:#e4ecfe; }
+        .param-explanation strong { color:var(--color-primary); }
+
+        .product-card { background:#fff; border:1px solid #e0e6ed; border-radius:var(--radius-medium); padding:18px 20px; margin-bottom:12px; cursor:pointer; transition:background 0.2s; }
+        .product-card:hover { background:#f7f9fc; }
+        .product-card .product-name { font-size:1.05rem; font-weight:700; color:var(--color-primary); }
+        .product-card .product-info { display:flex; flex-wrap:wrap; gap:10px; margin-top:6px; }
+        .product-tag { font-size:0.8rem; padding:4px 14px; border-radius:40px; background:#eaeef3; color:var(--color-text-secondary); }
+        .product-tag.return { background:#d4edda; color:#155724; }
+        .product-tag.risk-low { background:#cce5ff; color:#004085; }
+        .product-tag.risk-high { background:#f8d7da; color:#721c24; }
+
+        .policy-card { background:#fff; border:1px solid #e0e6ed; border-radius:var(--radius-medium); padding:18px 20px; margin-bottom:16px; cursor:pointer; transition:background 0.2s; }
+        .policy-card:hover { background:#f7f9fc; }
+        .policy-card h4 { font-size:1.1rem; color:var(--color-primary); margin-bottom:8px; }
+        .policy-card ul { padding-left:22px; margin:6px 0; }
+        .policy-card ul li { font-size:0.95rem; margin-bottom:6px; }
+        .policy-card .tip { background:#eef3f9; padding:12px 16px; border-radius:var(--radius-medium); margin-top:12px; border-left:4px solid var(--color-accent); }
+
+        .quiz-question { margin-bottom:24px; }
+        .quiz-question .q-title { font-size:1rem; font-weight:700; margin-bottom:12px; color:var(--color-text); }
+        .quiz-options { display:flex; flex-wrap:wrap; gap:10px; }
+        .quiz-option { padding:14px 22px; border:2px solid var(--color-border); border-radius:40px; font-size:0.9rem; cursor:pointer; transition:0.2s; background:#fff; min-height:52px; flex:1 0 auto; text-align:center; font-weight:500; }
+        .quiz-option.selected { border-color:var(--color-primary); background:#e6eef9; color:var(--color-primary); box-shadow:inset 0 0 0 2px var(--color-primary); }
+        .quiz-option:hover { border-color:var(--color-primary); transform:scale(1.02); }
+
+        .chat-float-btn { position:fixed; bottom:30px; right:30px; width:72px; height:72px; border-radius:50%; background:var(--color-primary); color:#fff; font-size:2.4rem; border:none; box-shadow:0 6px 24px rgba(26,58,107,0.5); cursor:pointer; z-index:1000; transition:all 0.3s; display:flex; align-items:center; justify-content:center; }
+        .chat-float-btn:hover { transform:scale(1.08); background:var(--color-primary-light); }
+
+        .chat-float-window {
+            position:fixed;
+            bottom:120px;
+            right:30px;
+            width:min(480px, 90vw);
+            height:70vh;
+            max-height:80vh;
+            min-height:400px;
+            background:#fff;
+            border-radius:var(--radius-large);
+            box-shadow:0 12px 48px rgba(0,0,0,0.25);
+            display:none;
+            flex-direction:column;
+            z-index:1001;
+            overflow:hidden;
+            border:2px solid var(--color-primary);
+        }
+        .chat-float-window.open { display:flex; }
+        .chat-float-header { background:var(--color-primary); color:#fff; padding:14px 20px; display:flex; justify-content:space-between; align-items:center; flex-shrink:0; }
+        .chat-float-header .title { font-size:1.1rem; font-weight:700; }
+        .chat-float-header .close-btn { background:none; border:none; color:#fff; font-size:1.8rem; cursor:pointer; }
+        .chat-float-messages { flex:1; overflow-y:auto; padding:16px 20px; display:flex; flex-direction:column; gap:12px; background:#f8fafc; cursor:pointer; }
+        .chat-float-messages .msg { max-width:85%; padding:12px 18px; border-radius:18px; font-size:1rem; line-height:1.6; white-space:pre-wrap; word-break:break-word; overflow-wrap:break-word; }
+        .chat-float-messages .msg.bot { align-self:flex-start; background:#fff; border:1px solid #e9ecef; border-top-left-radius:4px; cursor:pointer; transition:background 0.2s; }
+        .chat-float-messages .msg.bot:hover { background:#f0f4ff; }
+        .chat-float-messages .msg.user { align-self:flex-end; background:var(--color-primary); color:#fff; border-top-right-radius:4px; }
+        .chat-float-input { display:flex; gap:10px; padding:12px 16px; border-top:1px solid #e9ecef; background:#fff; flex-shrink:0; align-items:center; flex-wrap:wrap; }
+        .chat-float-input input { flex:1; padding:12px 18px; border:2px solid var(--color-border); border-radius:40px; font-size:1rem; min-height:48px; min-width:150px; }
+        .chat-float-input input:focus { outline:3px solid var(--color-accent); border-color:var(--color-primary); }
+        .chat-float-input button { padding:0 24px; border:none; border-radius:40px; background:var(--color-primary); color:#fff; font-size:1rem; font-weight:700; cursor:pointer; min-height:48px; transition:0.2s; white-space:nowrap; }
+        .chat-float-input button:hover { background:var(--color-primary-light); }
+        .chat-float-input .voice-btn { min-width:48px; min-height:48px; border-radius:50%; border:none; background:#e8a838; color:#fff; font-size:1.6rem; cursor:pointer; transition:0.2s; flex-shrink:0; box-shadow:0 2px 8px rgba(232,168,56,0.3); }
+        .chat-float-input .voice-btn:hover { transform:scale(1.05); background:#d4952f; }
+        .chat-float-input .voice-btn.listening { background:#d9534f; animation:pulse-red 1.2s infinite; box-shadow:0 0 0 8px rgba(217,83,79,0.3); }
+        @keyframes pulse-red { 0% { box-shadow:0 0 0 0 rgba(217,83,79,0.5); } 100% { box-shadow:0 0 0 12px rgba(217,83,79,0); } }
+
+        ::-webkit-scrollbar { width:10px; height:10px; }
+        ::-webkit-scrollbar-track { background:#e9ecef; border-radius:10px; }
+        ::-webkit-scrollbar-thumb { background:#b0b8c4; border-radius:10px; border:2px solid #e9ecef; }
+        ::-webkit-scrollbar-thumb:hover { background:var(--color-primary); }
+
+        .typing-indicator { display:flex; gap:8px; padding:6px 0; }
+        .typing-indicator span { width:12px; height:12px; border-radius:50%; background:#999; animation:typing 1.4s infinite; }
+        .typing-indicator span:nth-child(2) { animation-delay:0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay:0.4s; }
+        @keyframes typing { 0%,100% { opacity:0.3; transform:translateY(0); } 50% { opacity:1; transform:translateY(-6px); } }
+
+        .tab-content { display:none; }
+        .tab-content.active { display:block; }
+
+        .copy-toast { position:fixed; bottom:40px; left:50%; transform:translateX(-50%); background:var(--color-primary); color:#fff; padding:18px 40px; border-radius:60px; font-size:1.1rem; font-weight:600; box-shadow:0 8px 30px rgba(0,0,0,0.3); z-index:999; animation:fadeUp 0.4s ease; }
+        @keyframes fadeUp { 0% { opacity:0; transform:translateX(-50%) translateY(30px); } 100% { opacity:1; transform:translateX(-50%) translateY(0); } }
+
+        @media (max-width:1024px) {
+            .main-container { flex-direction:column; height:auto; min-height:unset; }
+            .sidebar { width:100%; max-height:600px; }
+            .result-area { height:500px; min-height:400px; }
+            .chat-float-window { width:min(480px, 90vw); right:20px; bottom:100px; height:55vh; }
+        }
+        @media (max-width:640px) {
+            body { padding:6px; }
+            .header { flex-direction:column; align-items:stretch; padding:12px; }
+            .header-controls { justify-content:center; }
+            .sidebar { max-height:500px; }
+            .panel { padding:16px; }
+            .form-row { flex-direction:column; }
+            .chat-float-btn { width:60px; height:60px; font-size:2rem; bottom:20px; right:20px; }
+            .chat-float-window { width:calc(100vw - 24px); right:12px; bottom:90px; height:50vh; }
+            .chat-float-input .voice-btn { min-width:40px; min-height:40px; font-size:1.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 安全横幅 -->
+    <div class="safety-banner">
+        <span class="icon">🔒</span>
+        <div class="text">
+            🚨 防骗提醒：任何自称"银行/银保监会"要求转账的都是骗子！
+            <small>购买理财产品请认准正规金融机构，大额投资前建议与子女商量。</small>
+        </div>
+        <span class="hotline">📞 12378 (银保监热线)</span>
+    </div>
+
+    <!-- 头部 -->
+    <div class="header">
+        <h1>养老规划小助手 <span class="badge">适老版</span></h1>
+        <div class="header-controls">
+            <button class="stop-btn" id="stopBtn" onclick="stopSpeaking()">⏹️ 停止</button>
+            <div class="tts-toggle-wrap active" id="ttsWrap">
+                <label>🔊 自动朗读 <div class="switch"><input type="checkbox" id="ttsSwitch" checked><span class="slider"></span></div></label>
+            </div>
+            <div style="display:flex; gap:6px; border-left:2px solid #ddd; padding-left:12px;">
+                <button class="font-size-btn" onclick="setFontSize('normal')" title="标准字体">A</button>
+                <button class="font-size-btn active" onclick="setFontSize('large')" title="大字体">A+</button>
+                <button class="font-size-btn" onclick="setFontSize('xlarge')" title="超大字体">A++</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主体 -->
+    <div class="main-container">
+        <div class="sidebar">
+            <div class="panel">
+                <div class="panel-title">功能面板</div>
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('calculate', this)">测算</button>
+                    <button class="tab-btn" onclick="switchTab('risk', this)">风险</button>
+                    <button class="tab-btn" onclick="switchTab('policy', this)">政策</button>
+                </div>
+
+                <!-- 测算 -->
+                <div id="tab-calculate" class="tab-content active">
+                    <div class="form-group"><label>当前年龄</label><input type="number" id="age" value="55" min="18" max="80"></div>
+                    <div class="form-group"><label>月收入（元）</label><input type="number" id="monthly_income" value="8000" min="0"></div>
+                    <div class="form-group"><label>月支出（元）</label><input type="number" id="monthly_expense" value="5000" min="0"></div>
+                    <div class="form-group"><label>当前储蓄（元）</label><input type="number" id="current_savings" value="200000" min="0"></div>
+                    <div class="form-group"><label>每月社保缴费（元）</label><input type="number" id="monthly_social_security" value="1500" min="0"></div>
+                    <div class="form-row">
+                        <div class="form-group"><label>退休年龄</label><select id="retirement_age"><option value="50">50岁</option><option value="55">55岁</option><option value="60" selected>60岁</option><option value="65">65岁</option></select></div>
+                        <div class="form-group"><label>预期寿命</label><input type="number" id="life_expectancy" value="85" min="60" max="100"></div>
+                    </div>
+                    <div class="form-group"><label>经济情景</label><select id="scenario"><option value="conservative">保守 (通胀4% / 收益3%)</option><option value="neutral" selected>中性 (通胀3% / 收益5%)</option><option value="optimistic">乐观 (通胀2% / 收益7%)</option></select></div>
+                    <button class="btn-primary" onclick="calculatePension()">开始测算</button>
+                    <div style="margin-top:12px;"><button class="btn-primary" onclick="generateProductRecommendation()" style="background:var(--color-accent);color:#1a3a6b;">生成产品推荐</button></div>
+                    <div style="margin-top:12px;"><button class="btn-primary" onclick="generatePlan()" style="background:#27ae60;color:#fff;">生成我的养老方案</button></div>
+                </div>
+
+                <!-- 风险测评（8题） -->
+                <div id="tab-risk" class="tab-content">
+                    <div class="quiz-question"><div class="q-title">1. 您的年龄是？</div><div class="quiz-options"><div class="quiz-option" data-q="q1" data-v="4" onclick="selectOption(this)">40岁以下</div><div class="quiz-option" data-q="q1" data-v="3" onclick="selectOption(this)">40-50岁</div><div class="quiz-option" data-q="q1" data-v="2" onclick="selectOption(this)">50-60岁</div><div class="quiz-option" data-q="q1" data-v="1" onclick="selectOption(this)">60岁以上</div></div></div>
+                    <div class="quiz-question"><div class="q-title">2. 您的投资经验？</div><div class="quiz-options"><div class="quiz-option" data-q="q2" data-v="4" onclick="selectOption(this)">5年以上</div><div class="quiz-option" data-q="q2" data-v="3" onclick="selectOption(this)">3-5年</div><div class="quiz-option" data-q="q2" data-v="2" onclick="selectOption(this)">1-3年</div><div class="quiz-option" data-q="q2" data-v="1" onclick="selectOption(this)">没有经验</div></div></div>
+                    <div class="quiz-question"><div class="q-title">3. 如果投资亏损20%，您会？</div><div class="quiz-options"><div class="quiz-option" data-q="q3" data-v="4" onclick="selectOption(this)">加仓买入</div><div class="quiz-option" data-q="q3" data-v="3" onclick="selectOption(this)">继续持有</div><div class="quiz-option" data-q="q3" data-v="2" onclick="selectOption(this)">部分卖出</div><div class="quiz-option" data-q="q3" data-v="1" onclick="selectOption(this)">全部卖出</div></div></div>
+                    <div class="quiz-question"><div class="q-title">4. 您的收入来源？</div><div class="quiz-options"><div class="quiz-option" data-q="q4" data-v="4" onclick="selectOption(this)">多元收入</div><div class="quiz-option" data-q="q4" data-v="3" onclick="selectOption(this)">稳定工资</div><div class="quiz-option" data-q="q4" data-v="2" onclick="selectOption(this)">退休金</div><div class="quiz-option" data-q="q4" data-v="1" onclick="selectOption(this)">不固定</div></div></div>
+                    <div class="quiz-question"><div class="q-title">5. 您的投资目标？</div><div class="quiz-options"><div class="quiz-option" data-q="q5" data-v="4" onclick="selectOption(this)">追求高收益</div><div class="quiz-option" data-q="q5" data-v="3" onclick="selectOption(this)">稳健增值</div><div class="quiz-option" data-q="q5" data-v="2" onclick="selectOption(this)">保本为主</div><div class="quiz-option" data-q="q5" data-v="1" onclick="selectOption(this)">绝对安全</div></div></div>
+                    <div class="quiz-question"><div class="q-title">6. 您对养老金的了解程度？</div><div class="quiz-options"><div class="quiz-option" data-q="q6" data-v="4" onclick="selectOption(this)">很了解</div><div class="quiz-option" data-q="q6" data-v="3" onclick="selectOption(this)">了解一些</div><div class="quiz-option" data-q="q6" data-v="2" onclick="selectOption(this)">不太了解</div><div class="quiz-option" data-q="q6" data-v="1" onclick="selectOption(this)">完全不了解</div></div></div>
+                    <div class="quiz-question"><div class="q-title">7. 您是否有子女或家人可以依靠？</div><div class="quiz-options"><div class="quiz-option" data-q="q7" data-v="4" onclick="selectOption(this)">有稳定支持</div><div class="quiz-option" data-q="q7" data-v="3" onclick="selectOption(this)">有一定支持</div><div class="quiz-option" data-q="q7" data-v="2" onclick="selectOption(this)">基本靠自己</div><div class="quiz-option" data-q="q7" data-v="1" onclick="selectOption(this)">完全靠自己</div></div></div>
+                    <div class="quiz-question"><div class="q-title">8. 您退休后主要收入来源？</div><div class="quiz-options"><div class="quiz-option" data-q="q8" data-v="4" onclick="selectOption(this)">社保为主</div><div class="quiz-option" data-q="q8" data-v="3" onclick="selectOption(this)">个人储蓄为主</div><div class="quiz-option" data-q="q8" data-v="2" onclick="selectOption(this)">商业保险为主</div><div class="quiz-option" data-q="q8" data-v="1" onclick="selectOption(this)">多种组合</div></div></div>
+                    <button class="btn-primary" onclick="submitRiskAssessment()">提交测评</button>
+                    <div style="margin-top:12px;"><button class="btn-primary" onclick="generateProductRecommendation()" style="background:var(--color-accent);color:#1a3a6b;">生成产品推荐</button></div>
+                    <div style="margin-top:12px;"><button class="btn-primary" onclick="generatePlan()" style="background:#27ae60;color:#fff;">生成我的养老方案</button></div>
+                </div>
+
+                <!-- 政策 -->
+                <div id="tab-policy" class="tab-content">
+                    <button class="btn-primary" onclick="showPolicy()">查看政策解读</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧结果展示 -->
+        <div class="result-area">
+            <div class="result-header">
+                <div class="avatar">📋</div>
+                <div class="info"><h3>结果展示</h3><p>点击任意卡片内容即可语音朗读</p></div>
+            </div>
+            <div class="result-display" id="resultDisplay">
+                <div class="placeholder"><span class="big-icon">🏠</span>请先在左侧进行测算或风险测评<br>结果将自动显示在这里</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 浮动聊天 -->
+    <button class="chat-float-btn" id="chatFloatBtn" onclick="toggleChatFloat()">💬</button>
+    <div class="chat-float-window" id="chatFloatWindow">
+        <div class="chat-float-header"><span class="title">💬 养老顾问</span><button class="close-btn" onclick="toggleChatFloat()">×</button></div>
+        <div class="chat-float-messages" id="chatFloatMessages">
+            <div class="msg bot">您好！我是您的专属养老顾问。我可以结合您的测算和风险数据，为您提供个性化建议。</div>
+        </div>
+        <div class="chat-float-input">
+            <input type="text" id="chatFloatInput" placeholder="输入您的问题..." onkeypress="if(event.key==='Enter')sendFloatMessage()">
+            <button class="voice-btn" id="floatVoiceBtn" onclick="toggleFloatVoiceInput()" title="语音输入">🎤</button>
+            <button onclick="sendFloatMessage()">发送</button>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // 全局状态
+        // ============================================================
+        let lastPensionResult = null;
+        let lastRiskResult = null;
+        let lastProductRecommendation = null;
+        let userContext = {};
+        let chatHistory = [];
+        let riskAnswers = {};
+
+        // ============================================================
+        // 字体大小
+        // ============================================================
+        function setFontSize(mode) {
+            document.body.classList.remove('font-xl');
+            const btns = document.querySelectorAll('.font-size-btn');
+            btns.forEach(b => b.classList.remove('active'));
+            if (mode === 'normal') { document.documentElement.style.fontSize = '18px'; btns[0].classList.add('active'); }
+            else if (mode === 'large') { document.documentElement.style.fontSize = '22px'; btns[1].classList.add('active'); }
+            else if (mode === 'xlarge') { document.documentElement.style.fontSize = '26px'; document.body.classList.add('font-xl'); btns[2].classList.add('active'); }
+            localStorage.setItem('pension_font_size', mode);
+        }
+        (function() { const saved = localStorage.getItem('pension_font_size') || 'large'; setFontSize(saved); })();
+
+        // ============================================================
+        // 语音播报
+        // ============================================================
+        const ttsSwitch = document.getElementById('ttsSwitch');
+        const ttsWrap = document.getElementById('ttsWrap');
+        let ttsEnabled = true;
+        ttsSwitch.addEventListener('change', function() { ttsEnabled = this.checked; if (ttsEnabled) ttsWrap.classList.add('active'); else ttsWrap.classList.remove('active'); });
+        const stopBtn = document.getElementById('stopBtn');
+        let isManualStop = false;
+
+        // 自动朗读（受开关控制）
+        function speakText(text) {
+            if (!ttsEnabled) return;
+            isManualStop = false;
+            if (stopBtn.classList.contains('stopped')) { stopBtn.classList.remove('stopped'); stopBtn.textContent = '⏹️ 停止'; }
+            window.speechSynthesis.cancel();
+            const cleanText = text.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+            if (!cleanText) return;
+            const utterance = new SpeechSynthesisUtterance(cleanText);
+            utterance.lang = 'zh-CN';
+            utterance.rate = 0.9;
+            utterance.pitch = 1.0;
+            utterance.volume = 1;
+            const voices = window.speechSynthesis.getVoices();
+            const zhVoice = voices.find(v => v.lang.startsWith('zh'));
+            if (zhVoice) utterance.voice = zhVoice;
+            utterance.onend = function() { if (isManualStop) { isManualStop = false;return;}stopBtn.classList.remove('stopped'); stopBtn.textContent = '⏹️ 停止'; } ;
+            utterance.onerror = function() { if (isManualStop) { isManualStop = false;return;}stopBtn.classList.remove('stopped'); stopBtn.textContent = '⏹️ 停止'; } ;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // 强制朗读（不受自动朗读开关控制，用于点击朗读）
+        function speakTextForce(text) {
+            isManualStop = false;
+            if (stopBtn.classList.contains('stopped')) { stopBtn.classList.remove('stopped'); stopBtn.textContent = '⏹️ 停止'; }
+            window.speechSynthesis.cancel();
+            const cleanText = text.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+            if (!cleanText) return;
+            const utterance = new SpeechSynthesisUtterance(cleanText);
+            utterance.lang = 'zh-CN';
+            utterance.rate = 0.9;
+            utterance.pitch = 1.0;
+            utterance.volume = 1;
+            const voices = window.speechSynthesis.getVoices();
+            const zhVoice = voices.find(v => v.lang.startsWith('zh'));
+            if (zhVoice) utterance.voice = zhVoice;
+            utterance.onend = function() { if (isManualStop) {isManualStop = false;return;}stopBtn.classList.remove('stopped'); stopBtn.textContent = '⏹️ 停止'; } ;
+            utterance.onerror = function() { if (isManualStop) { isManualStop = false;return;}stopBtn.classList.remove('stopped'); stopBtn.textContent = '⏹️ 停止'; } ;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function stopSpeaking() {
+            if (window.speechSynthesis) { isManualStop = true; stopBtn.classList.add('stopped'); stopBtn.textContent = '⏹️ 已停止';window.speechSynthesis.cancel(); showToast('已停止朗读'); }
+            else { showToast('当前浏览器不支持语音朗读'); }
+        }
+        window.speechSynthesis.getVoices();
+
+        // ============================================================
+        // 标签页切换
+        // ============================================================
+        function switchTab(tabName, btn) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + tabName).classList.add('active');
+            if (btn) btn.classList.add('active');
+            if (tabName === 'policy') showPolicy();
+        }
+
+        // ============================================================
+        // 养老金测算
+        // ============================================================
+        async function calculatePension() {
+            const age = parseInt(document.getElementById('age').value) || 55;
+            const income = parseFloat(document.getElementById('monthly_income').value) || 8000;
+            const expense = parseFloat(document.getElementById('monthly_expense').value) || 5000;
+            const savings = parseFloat(document.getElementById('current_savings').value) || 200000;
+            const social = parseFloat(document.getElementById('monthly_social_security').value) || 1500;
+            const retAge = parseInt(document.getElementById('retirement_age').value) || 60;
+            const lifeExp = parseInt(document.getElementById('life_expectancy').value) || 85;
+            const scenario = document.getElementById('scenario').value || 'neutral';
+            userContext = { age, income, expense, savings, social, retAge, lifeExp, scenario };
+            if (lifeExp <= retAge) { showResult('预期寿命必须大于退休年龄，请调整。', 'error'); return; }
+            try {
+                const resp = await fetch('/api/calculate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ age, monthly_income: income, monthly_expense: expense,
+                        current_savings: savings, monthly_social_security: social,
+                        retirement_age: retAge, life_expectancy: lifeExp, scenario })
+                });
+                const result = await resp.json();
+                if (result.success) {
+                    lastPensionResult = result.data;
+                    renderPensionResult(result.data);
+                    showToast('测算完成！');
+                } else { showResult('计算失败：' + (result.error || '未知错误'), 'error'); }
+            } catch (e) { showResult('网络请求失败，请检查服务。', 'error'); }
+        }
+
+        function renderPensionResult(d) {
+            const isGap = d.gap > 0;
+            const gapClass = isGap ? 'danger' : 'success';
+            const gapText = isGap ? `缺口 ${formatMoney(d.gap)} 元` : '资金充足 ✅';
+            const scenarioClass = d.scenario || 'neutral';
+            const scenarioLabel = d.scenario_label || '中性';
+            const coverRatio = d.coverage_ratio || 0;
+            let coverStatus = coverRatio >= 100 ? '充足' : (coverRatio >= 80 ? '需关注' : '不足');
+
+            let html = `
+                <div class="result-card">
+                    <div class="scenario-badge ${scenarioClass}">📊 ${scenarioLabel}</div>
+                    <div class="result-section-title">基本参数</div>
+                    <div class="result-item"><span class="label">距退休</span><span class="value">${d.years_to_retirement} 年</span></div>
+                    <div class="result-item"><span class="label">退休后预期</span><span class="value">${d.retirement_years} 年</span></div>
+                    <div class="result-section-title">退休月支出</div>
+                    <div class="result-item"><span class="label">基础生活</span><span class="value">${formatMoney(d.future_base_expense)} 元</span></div>
+                    <div class="result-item"><span class="label">医疗健康</span><span class="value">${formatMoney(d.future_medical_expense)} 元</span></div>
+                    <div class="result-item" style="font-weight:700;border-bottom:2px solid #ccc;"><span class="label">合计</span><span class="value">${formatMoney(d.future_monthly_expense)} 元</span></div>
+                    <div class="result-section-title">总需求与资源</div>
+                    <div class="result-item"><span class="label">总需求</span><span class="value">${formatMoney(d.total_need)} 元</span></div>
+                    <div class="result-item"><span class="label">社保养老金 (替代率${d.replacement_rate}%)</span><span class="value success">${formatMoney(d.total_pension)} 元</span></div>
+                    <div class="result-item"><span class="label">储蓄(退休时)</span><span class="value">${formatMoney(d.future_savings)} 元</span></div>
+                    <div class="result-item"><span class="label">新增储蓄(退休时)</span><span class="value">${formatMoney(d.future_additional_savings)} 元</span></div>
+                    <div class="result-section-title">结论</div>
+                    <div class="result-item"><span class="label">覆盖率</span><span class="value ${coverRatio >= 100 ? 'success' : 'warning'}">${coverRatio}% ${coverStatus}</span></div>
+                    <div class="result-item"><span class="label">养老金缺口</span><span class="value ${gapClass}">${gapText}</span></div>
+                    ${isGap ? `<div class="result-item"><span class="label">每月需额外存</span><span class="value danger">${formatMoney(d.monthly_investment_needed)} 元</span></div>` : ''}
+                    <div style="margin-top:14px;padding:12px 16px;background:#e6eef9;border-radius:12px;font-size:0.9rem;color:#1a3a6b;">💡 说明：医疗通胀单独计算，社保替代率根据收入动态调整。</div>
+                </div>
+                <div class="param-explanation" onclick="speakTextForce(this.innerText)">
+                    <strong>📖 这些数字是什么意思？</strong><br>
+                    • <strong>覆盖率</strong>：好比您的“养老金够花指数”。100%表示刚好够，低于100%说明还有缺口，需要提前多准备一些。<br>
+                    • <strong>养老金缺口</strong>：就是您总需求减去总资源后，还差多少钱。正数表示不够，需要您从现在开始多存钱；负数说明您存得够多，不用太担心。<br>
+                    • <strong>每月需额外存</strong>：为了补上缺口，从现在开始，您每个月需要多存的钱（已经算了利息收益）。存得越早，每月压力越小。<br>
+                    • <strong>替代率</strong>：退休后社保发的钱，占您退休前收入的比例。比如替代率50%，说明退休后每月能拿退休前一半的工资。<br>
+                    • <strong>储蓄(退休时)</strong>：您现在存的钱，到退休时会变成多少（考虑了投资增值）。<br>
+                    • <strong>新增储蓄(退休时)</strong>：您以后每个月攒的钱，到退休时一共会变成多少（也算了投资增值）。
+                </div>
+            `;
+            showResult(html);
+        }
+
+        // ============================================================
+        // 风险测评
+        // ============================================================
+        function selectOption(el) {
+            const q = el.dataset.q;
+            const v = parseInt(el.dataset.v);
+            riskAnswers[q] = v;
+            el.parentElement.querySelectorAll('.quiz-option').forEach(opt => opt.classList.remove('selected'));
+            el.classList.add('selected');
+        }
+
+        async function submitRiskAssessment() {
+            if (Object.keys(riskAnswers).length < 8) { alert('请完成所有8个问题再提交！'); return; }
+            try {
+                const gap = lastPensionResult?.gap || 0;
+                const age = parseInt(document.getElementById('age').value) || 55;
+                const retirementAge = parseInt(document.getElementById('retirement_age').value) || 60;
+                const monthlyIncome = parseFloat(document.getElementById('monthly_income').value) || 8000;
+                const investmentAmount = parseFloat(document.getElementById('investment_amount')?.value) || 100000;
+                const resp = await fetch('/api/risk_assessment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ answers: riskAnswers, investment_amount: investmentAmount,
+                        gap: gap, age: age, retirement_age: retirementAge, monthly_income: monthlyIncome })
+                });
+                const result = await resp.json();
+                if (result.success) {
+                    lastRiskResult = result.data;
+                    renderRiskResult(result.data);
+                    showToast('风险测评完成！');
+                }
+            } catch (e) { alert('提交失败，请检查网络。'); }
+        }
+
+        // ============================================================
+        // 去重工具函数
+        // ============================================================
+        function deduplicateProducts(products) {
+            const seen = new Set();
+            return products.filter(p => {
+                const key = (p.name || '') + '|' + (p.code || '');
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
+        }
+
+        // ============================================================
+        // 渲染函数（已添加去重）
+        // ============================================================
+        function renderRiskResult(d) {
+            const uniqueProducts = deduplicateProducts(d.products || []);
+            let productHtml = '';
+            if (uniqueProducts.length > 0) {
+                uniqueProducts.slice(0, 3).forEach(p => {
+                    const riskClass = ['低','极低'].includes(p.risk) ? 'risk-low' : (['中高','高'].includes(p.risk) ? 'risk-high' : '');
+                    let ret = p.return_1y || p.expected_return || p.interest_rate || '';
+                    productHtml += `<div class="product-card"><div class="product-name">${p.name}</div><div class="product-info"><span class="product-tag">${p.type}</span>${ret ? `<span class="product-tag return">${ret}</span>` : ''}<span class="product-tag ${riskClass}">风险：${p.risk}</span><span class="product-tag">起投 ${p.min_amount}元</span></div></div>`;
+                });
+            } else { productHtml = '<p style="color:#666;">暂无匹配产品，请尝试其他风险等级。</p>'; }
+            let html = `
+                <div class="result-card">
+                    <div class="result-item"><span class="label">得分</span><span class="value">${d.score}/100</span></div>
+                    <div class="result-item"><span class="label">风险等级</span><span class="value" style="color:#1a3a6b;">${d.level}</span></div>
+                    <div class="result-item"><span class="label">特征描述</span><span class="value" style="font-weight:400;">${d.description}</span></div>
+                    <div class="result-item"><span class="label">建议配置</span><span class="value" style="font-weight:400;">${d.allocation}</span></div>
+                </div>
+                <h3 style="margin:16px 0 8px;color:var(--color-primary);">推荐产品（基于风险）</h3>
+                ${productHtml}
+                <div style="margin-top:12px;"><button class="btn-primary" onclick="generateProductRecommendation()" style="background:var(--color-accent);color:#1a3a6b;">生成更精准的产品推荐</button></div>
+                <div class="param-explanation" onclick="speakTextForce(this.innerText)">
+                    <strong>📖 风险等级含义</strong><br>
+                    • 得分越高，说明您越能承受市场波动。<br>
+                    • <strong>保守型</strong>：最看重资金安全，适合快退休或不愿本金亏损的人。<br>
+                    • <strong>平衡型</strong>：兼顾安全和收益，适合大多数中年人。<br>
+                    • <strong>稳健型</strong>：愿意承担一些风险来换取更高收益，适合有一定投资经验的人。<br>
+                    • <strong>积极型</strong>：追求长期高回报，能忍受较大波动，适合年轻人或风险承受能力强的人。
+                </div>
+            `;
+            showResult(html);
+        }
+
+        function renderProductRecommendation(products) {
+            const uniqueProducts = deduplicateProducts(products);
+            let html = `<div class="result-card"><h3 style="color:var(--color-primary);">根据您的风险等级和养老金缺口推荐的产品</h3>`;
+            uniqueProducts.forEach(p => {
+                const riskClass = ['低','极低'].includes(p.risk) ? 'risk-low' : (['中高','高'].includes(p.risk) ? 'risk-high' : '');
+                let ret = p.return_1y || p.expected_return || p.interest_rate || '';
+                html += `<div class="product-card"><div class="product-name">${p.name} ${p.code ? `(${p.code})` : ''}</div><div class="product-info"><span class="product-tag">${p.type}</span>${ret ? `<span class="product-tag return">${ret}</span>` : ''}<span class="product-tag ${riskClass}">风险：${p.risk}</span><span class="product-tag">起投 ${p.min_amount}元</span></div>${p.features ? `<div style="margin-top:6px;">${p.features.map(f => `<span class="product-tag">${f}</span>`).join('')}</div>` : ''}</div>`;
+            });
+            html += `<div style="background:#fff3cd;padding:12px;border-radius:12px;font-size:0.85rem;margin-top:12px;">⚠️ 风险提示：过往业绩不代表未来，投资需谨慎。</div></div>`;
+            showResult(html);
+        }
+
+        // ============================================================
+        // 产品推荐（融合测算）
+        // ============================================================
+        async function generateProductRecommendation() {
+            if (!lastRiskResult) { alert('请先完成风险测评！'); return; }
+            if (!lastPensionResult) { alert('请先完成养老金测算！'); return; }
+            const riskLevel = lastRiskResult.level || '平衡型';
+            const investment = parseFloat(document.getElementById('investment_amount')?.value) || 100000;
+            const pension = lastPensionResult;
+            const age = parseInt(document.getElementById('age').value) || 55;
+            const retirementAge = parseInt(document.getElementById('retirement_age').value) || 60;
+            const monthlyIncome = parseFloat(document.getElementById('monthly_income').value) || 8000;
+            try {
+                const resp = await fetch('/api/products', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ risk_level: riskLevel, investment_amount: investment,
+                        gap: pension.gap || 0, age, retirement_age: retirementAge, monthly_income: monthlyIncome })
+                });
+                const result = await resp.json();
+                if (result.success && result.data.length > 0) {
+                    lastProductRecommendation = result.data;
+                    renderProductRecommendation(result.data);
+                    showToast('产品推荐已生成！');
+                } else { showResult('暂无匹配产品，建议调整参数。'); }
+            } catch (e) { console.error(e); }
+        }
+
+        // ============================================================
+        // 生成完整养老方案
+        // ============================================================
+        async function generatePlan() {
+          if (!lastPensionResult || !lastRiskResult) {
+                alert('请先完成养老金测算和风险测评！');
+                return;
+            }
+            try {
+                // 构建 context，包含所有数据
+                const context = {
+                    user_info: userContext,
+                    pension_result: lastPensionResult,
+                    risk_result: lastRiskResult,
+                    products: lastProductRecommendation || []
+                };
+                const resp = await fetch('/api/generate_plan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ context: context })
+                });
+                const result = await resp.json();
+                if (result.success) {
+                    const planText = result.data.replace(/\n/g, '<br>');
+                    showResult(`<div class="result-card"><h2 style="color:var(--color-primary);">📄 您的个人养老规划方案</h2>${planText}</div>`);
+                    showToast('方案已生成！');
+                } else {
+                    showResult('生成失败：' + (result.error || '未知错误'), 'error');
+                }
+            } catch (e) {
+                showResult('网络请求失败，请检查服务。', 'error');
+            }
+        }
+
+        // ============================================================
+        // 政策解读
+        // ============================================================
+        function showPolicy() {
+            const policies = {
+                "个人养老金": { summary: "国家第三支柱，2024年12月已推广至全国", details: ["每年最多缴纳12,000元，享受税前扣除","可购买理财、基金、保险、存款、国债","领取时按3%税率缴税","专家建议提高上限，但尚未正式实施"], tip: "个税税率≥10%的朋友，参加个人养老金很划算！" },
+                "基本养老金": { summary: "第一支柱，由基础养老金+个人账户组成", details: ["最低缴费15年（2039年起提高至20年）","2026年城乡居民基础养老金每月再提高20元","多缴多得，长缴多得"], tip: "尽量延长缴费年限，退休后每月多领钱！" },
+                "商业养老保险": { summary: "第三支柱，国家鼓励的商业补充", details: ["年金保险：活多久领多久","增额终身寿险：现金价值持续增长","长期护理保险：应对失能风险","养老理财试点已扩大至全国"], tip: "50岁前投保年金险比较划算，年龄越大保费越高！" }
+            };
+            let html = '<div class="result-card"><h2 style="color:var(--color-primary);">📜 养老金融政策解读</h2>';
+            for (const [name, info] of Object.entries(policies)) {
+                html += `<div class="policy-card"><h4>${name}</h4><p style="color:#555;margin-bottom:6px;">${info.summary}</p><ul>${info.details.map(d => `<li>${d}</li>`).join('')}</ul><div class="tip">💡 ${info.tip}</div></div>`;
+            }
+            html += '</div>';
+            showResult(html);
+        }
+
+        // ============================================================
+        // 辅助函数
+        // ============================================================
+        function showResult(content, type = 'html') {
+            const container = document.getElementById('resultDisplay');
+            if (type === 'html') { container.innerHTML = content; }
+            else { container.innerHTML = `<div class="result-card" style="background:#f8d7da;"><p style="color:#721c24;">${content}</p></div>`; }
+            if (ttsEnabled) {
+                const text = container.innerText || container.textContent;
+                if (text && text.length > 20) speakText(text);
+            }
+        }
+
+        function formatMoney(num) {
+            if (num === undefined || num === null || isNaN(num)) return '0';
+            return Math.abs(num).toLocaleString('zh-CN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        }
+
+        function showToast(msg) {
+            const old = document.querySelector('.copy-toast');
+            if (old) old.remove();
+            const div = document.createElement('div');
+            div.className = 'copy-toast';
+            div.textContent = msg;
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 4000);
+        }
+
+        // ============================================================
+        // 浮动聊天
+        // ============================================================
+        let chatFloatOpen = false;
+        function toggleChatFloat() {
+            chatFloatOpen = !chatFloatOpen;
+            const win = document.getElementById('chatFloatWindow');
+            const btn = document.getElementById('chatFloatBtn');
+            if (chatFloatOpen) { win.classList.add('open'); btn.textContent = '✕'; document.getElementById('chatFloatInput')?.focus(); }
+            else { win.classList.remove('open'); btn.textContent = '💬'; }
+        }
+
+        // 语音输入
+        let floatRecognition = null, floatListening = false;
+        function toggleFloatVoiceInput() {
+            const btn = document.getElementById('floatVoiceBtn');
+            if (floatListening) { stopFloatVoice(); return; }
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) { alert('您的浏览器不支持语音输入，请使用Chrome或Edge。'); return; }
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            floatRecognition = new SpeechRecognition();
+            floatRecognition.lang = 'zh-CN';
+            floatRecognition.continuous = false;
+            floatRecognition.interimResults = true;
+            floatRecognition.onstart = function() { floatListening = true; btn.classList.add('listening'); btn.textContent = '⏹️'; document.getElementById('chatFloatInput').placeholder = '正在听...'; };
+            floatRecognition.onresult = function(event) {
+                let final = '', interim = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) final += transcript;
+                    else interim += transcript;
+                }
+                const input = document.getElementById('chatFloatInput');
+                if (final) { input.value = final; stopFloatVoice(); sendFloatMessage(); }
+                else if (interim) { input.value = interim; }
+            };
+            floatRecognition.onerror = function() { stopFloatVoice(); };
+            floatRecognition.onend = function() { stopFloatVoice(); };
+            try { floatRecognition.start(); } catch (e) { stopFloatVoice(); }
+        }
+        function stopFloatVoice() {
+            if (floatRecognition) { try { floatRecognition.stop(); } catch (e) {} }
+            floatListening = false;
+            const btn = document.getElementById('floatVoiceBtn');
+            if (btn) { btn.classList.remove('listening'); btn.textContent = '🎤'; }
+            const input = document.getElementById('chatFloatInput');
+            if (input && input.placeholder === '正在听...') input.placeholder = '输入您的问题...';
+        }
+
+        async function sendFloatMessage() {
+            const input = document.getElementById('chatFloatInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+            chatHistory.push({ role: 'user', content: msg });
+            const container = document.getElementById('chatFloatMessages');
+            const userDiv = document.createElement('div');
+            userDiv.className = 'msg user';
+            userDiv.textContent = msg;
+            container.appendChild(userDiv);
+            input.value = '';
+            container.scrollTop = container.scrollHeight;
+
+            const context = { user_info: userContext, pension_result: lastPensionResult, risk_result: lastRiskResult, products: lastProductRecommendation };
+            const loadingId = 'loading-' + Date.now();
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'msg bot';
+            loadingDiv.id = loadingId;
+            loadingDiv.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
+            container.appendChild(loadingDiv);
+            container.scrollTop = container.scrollHeight;
+
+            try {
+                const resp = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: msg, context })
+                });
+                const result = await resp.json();
+                document.getElementById(loadingId)?.remove();
+                if (result.success) {
+                    const botDiv = document.createElement('div');
+                    botDiv.className = 'msg bot';
+                    botDiv.textContent = result.reply;
+                    container.appendChild(botDiv);
+                    chatHistory.push({ role: 'assistant', content: result.reply });
+                    if (ttsEnabled) speakText(result.reply);
+                } else {
+                    const errDiv = document.createElement('div');
+                    errDiv.className = 'msg bot';
+                    errDiv.textContent = '抱歉，出错了，请稍后再试。';
+                    container.appendChild(errDiv);
+                }
+            } catch (e) {
+                document.getElementById(loadingId)?.remove();
+                const errDiv = document.createElement('div');
+                errDiv.className = 'msg bot';
+                errDiv.textContent = '网络连接失败，请检查服务。';
+                container.appendChild(errDiv);
+            }
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // 回车发送
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('chatFloatInput')?.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') { e.preventDefault(); sendFloatMessage(); }
+            });
+        });
+
+        // ============================================================
+        // 点击语音朗读（事件委托，使用强制朗读）
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('resultDisplay').addEventListener('click', function(e) {
+                const target = e.target.closest('.result-card, .policy-card, .product-card, .result-item, .result-section-title, .scenario-badge, .param-explanation');
+                if (target) {
+                    const text = target.innerText || target.textContent;
+                    if (text) speakTextForce(text);
+                }
+            });
+            document.getElementById('chatFloatMessages').addEventListener('click', function(e) {
+                const msg = e.target.closest('.msg.bot');
+                if (msg) {
+                    const text = msg.innerText || msg.textContent;
+                    if (text) speakTextForce(text);
+                }
+            });
+        });
+
+        // ============================================================
+        // 初始化
+        // ============================================================
+        window.onload = function() {
+            window.speechSynthesis.getVoices();
+            document.querySelector('.tab-btn.active')?.classList.remove('active');
+            document.querySelector('.tab-btn')?.classList.add('active');
+            showResult(`<div class="placeholder"><span class="big-icon">🏠</span>请先在左侧进行测算或风险测评<br>结果将自动显示在这里</div>`);
+        };
+    </script>
+</body>
+</html>
